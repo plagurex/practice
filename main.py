@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
+import cv2
 
 
 class ImageProcessorApp:
@@ -35,7 +36,7 @@ class ImageProcessorApp:
         btn_save.pack(fill="x")
         btn_save_as = tk.Button(file_frame, text="Сохранить как", command=self.save_image_as)
         btn_save_as.pack(fill="x")
-        btn_camera = tk.Button(file_frame, text="Сделать снимок с веб-камеры")
+        btn_camera = tk.Button(file_frame, text="Сделать снимок с веб-камеры", command=self.capture_from_camera)
         btn_camera.pack(fill="x")
 
     def _create_channel_frame(self, parent):
@@ -99,6 +100,43 @@ class ImageProcessorApp:
             self._update_display()
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить изображение:\n{str(e)}")
+
+    def capture_from_camera(self):
+        try:
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                messagebox.showerror("Ошибка", "Не удалось открыть веб-камеру")
+                return
+
+            captured_image = None
+            
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    messagebox.showerror("Ошибка", "Не удалось захватить изображение с веб-камеры")
+                    break
+
+                cv2.imshow("Camera - press SPACE to capture or ESC to exit", frame)
+                
+                key = cv2.waitKey(1) & 0xFF
+                if key == 32:
+                    captured_image = frame.copy()
+                    break
+                elif key == 27:
+                    break
+
+            cap.release()
+            cv2.destroyAllWindows()
+
+            if captured_image is not None:
+                frame_rgb = cv2.cvtColor(captured_image, cv2.COLOR_BGR2RGB)
+                self.current_image = Image.fromarray(frame_rgb)
+                self.current_image_path = None
+                self.result_image = self.current_image.copy()
+                self._update_display()
+        except Exception as e:
+            cv2.destroyAllWindows()
+            messagebox.showerror("Ошибка", f"Не удалось получить изображение с веб-камеры:\n{str(e)}")
 
     def save_image(self):
         if self.result_image is None:
