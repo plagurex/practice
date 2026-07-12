@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import cv2
+import numpy as np
 
 
 class ImageProcessorApp:
@@ -57,7 +58,7 @@ class ImageProcessorApp:
         func_frame = tk.LabelFrame(parent, text="Функции", padx=10, pady=10)
         func_frame.pack(fill="x")
 
-        btn_neg = tk.Button(func_frame, text="Негатив")
+        btn_neg = tk.Button(func_frame, text="Негатив", command=self.apply_negative)
         btn_neg.pack(fill="x")
         btn_bright = tk.Button(func_frame, text="Яркость")
         btn_bright.pack(fill="x")
@@ -199,7 +200,19 @@ class ImageProcessorApp:
             self.display_image = Image.merge('RGB', (Image.new('L', g.size, 0), g, Image.new('L', g.size, 0)))
         elif channel == 'blue':
             self.display_image = Image.merge('RGB', (Image.new('L', b.size, 0), Image.new('L', b.size, 0), b))
-        
+
+        self._update_display()
+
+    def apply_negative(self):
+        if self.result_image is None:
+            return
+
+        img_array = np.array(self.result_image)
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        neg_bgr = cv2.bitwise_not(img_bgr)
+        neg_rgb = cv2.cvtColor(neg_bgr, cv2.COLOR_BGR2RGB)
+        self.result_image = Image.fromarray(neg_rgb)
+
         self._update_display()
 
     def reset_display(self):
