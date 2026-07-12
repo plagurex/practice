@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, simpledialog
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
@@ -60,10 +60,12 @@ class ImageProcessorApp:
 
         btn_neg = tk.Button(func_frame, text="Негатив", command=self.apply_negative)
         btn_neg.pack(fill="x")
-        btn_bright = tk.Button(func_frame, text="Яркость")
+        btn_bright = tk.Button(func_frame, text="Яркость", command=self.change_brightness)
         btn_bright.pack(fill="x")
         btn_circle = tk.Button(func_frame, text="Круг")
         btn_circle.pack(fill="x")
+        btn_reset = tk.Button(func_frame, text="Сбросить изменения", command=self.reset_result)
+        btn_reset.pack(fill="x")
 
     def _create_right_frame(self):
         right_frame = tk.Frame(self.root, pady=10)
@@ -215,10 +217,46 @@ class ImageProcessorApp:
 
         self._update_display()
 
+    def change_brightness(self):
+        if self.current_image is None:
+            return
+
+        brightness = tk.simpledialog.askinteger(
+            "Изменение яркости",
+            "Введите значение яркости (-255 до 255):",
+            parent=self.root,
+            minvalue=-255,
+            maxvalue=255
+        )
+
+        if brightness is None:
+            return
+
+        img_array = np.array(self.result_image)
+        img_hsv = cv2.cvtColor(img_array, cv2.COLOR_RGB2HSV).astype(np.float32)
+
+        img_hsv[:, :, 2] = np.clip(img_hsv[:, :, 2] + brightness, 0, 255)
+
+        img_hsv = img_hsv.astype(np.uint8)
+        img_rgb = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2RGB)
+        self.result_image = Image.fromarray(img_rgb)
+
+        self._update_display()
+
     def reset_display(self):
         if self.current_image is not None:
             self.display_image = self.current_image.copy()
             self._update_display()
+
+    def reset_result(self):
+        if self.result_image is not None:
+            result = messagebox.askokcancel(
+                "Подтверждение",
+                "Вы хотите сбросить изменения?"
+            )
+            if result:
+                self.result_image = self.current_image.copy()
+                self._update_display()
 
     def _update_display(self):
         if self.current_image is None:
