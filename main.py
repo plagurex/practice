@@ -13,6 +13,7 @@ class ImageProcessorApp:
         self.current_image = None
         self.current_image_path = None
         self.result_image = None
+        self.display_image = None
 
         self._create_left_frame()
         self._create_right_frame()
@@ -43,12 +44,14 @@ class ImageProcessorApp:
         channel_frame = tk.LabelFrame(parent, text="Каналы", padx=10, pady=10)
         channel_frame.pack(fill="x")
 
-        btn_red = tk.Button(channel_frame, text="Красный")
+        btn_red = tk.Button(channel_frame, text="Красный", command=lambda: self.apply_channel('red'))
         btn_red.pack(fill="x")
-        btn_green = tk.Button(channel_frame, text="Зелёный")
+        btn_green = tk.Button(channel_frame, text="Зелёный", command=lambda: self.apply_channel('green'))
         btn_green.pack(fill="x")
-        btn_blue = tk.Button(channel_frame, text="Синий")
+        btn_blue = tk.Button(channel_frame, text="Синий", command=lambda: self.apply_channel('blue'))
         btn_blue.pack(fill="x")
+        btn_reset = tk.Button(channel_frame, text="Сбросить", command=self.reset_display)
+        btn_reset.pack(fill="x")
 
     def _create_func_frame(self, parent):
         func_frame = tk.LabelFrame(parent, text="Функции", padx=10, pady=10)
@@ -97,6 +100,7 @@ class ImageProcessorApp:
             self.current_image = Image.open(file_path)
             self.current_image_path = file_path
             self.result_image = self.current_image.copy()
+            self.display_image = self.current_image.copy()
             self._update_display()
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить изображение:\n{str(e)}")
@@ -133,6 +137,7 @@ class ImageProcessorApp:
                 self.current_image = Image.fromarray(frame_rgb)
                 self.current_image_path = None
                 self.result_image = self.current_image.copy()
+                self.display_image = self.current_image.copy()
                 self._update_display()
         except Exception as e:
             cv2.destroyAllWindows()
@@ -177,11 +182,36 @@ class ImageProcessorApp:
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось сохранить изображение:\n{str(e)}")
 
+    def apply_channel(self, channel):
+        if self.current_image is None:
+            return
+
+        self.display_image = self.current_image.copy()
+
+        if self.display_image.mode != 'RGB':
+            self.display_image = self.display_image.convert('RGB')
+
+        r, g, b = self.display_image.split()
+        
+        if channel == 'red':
+            self.display_image = Image.merge('RGB', (r, Image.new('L', r.size, 0), Image.new('L', r.size, 0)))
+        elif channel == 'green':
+            self.display_image = Image.merge('RGB', (Image.new('L', g.size, 0), g, Image.new('L', g.size, 0)))
+        elif channel == 'blue':
+            self.display_image = Image.merge('RGB', (Image.new('L', b.size, 0), Image.new('L', b.size, 0), b))
+        
+        self._update_display()
+
+    def reset_display(self):
+        if self.current_image is not None:
+            self.display_image = self.current_image.copy()
+            self._update_display()
+
     def _update_display(self):
         if self.current_image is None:
             return
 
-        self._display_image(self.original_label, self.current_image)
+        self._display_image(self.original_label, self.display_image)
 
         if self.result_image is not None:
             self._display_image(self.result_label, self.result_image)
