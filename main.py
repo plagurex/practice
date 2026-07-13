@@ -62,7 +62,7 @@ class ImageProcessorApp:
         btn_neg.pack(fill="x")
         btn_bright = tk.Button(func_frame, text="Яркость", command=self.change_brightness)
         btn_bright.pack(fill="x")
-        btn_circle = tk.Button(func_frame, text="Круг")
+        btn_circle = tk.Button(func_frame, text="Круг", command=self.draw_circle)
         btn_circle.pack(fill="x")
         btn_reset = tk.Button(func_frame, text="Сбросить изменения", command=self.reset_result)
         btn_reset.pack(fill="x")
@@ -241,6 +241,86 @@ class ImageProcessorApp:
         img_rgb = cv2.cvtColor(img_hsv, cv2.COLOR_HSV2RGB)
         self.result_image = Image.fromarray(img_rgb)
 
+        self._update_display()
+
+    def draw_circle(self):
+        if self.current_image is None:
+            return
+        
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Параметры круга")
+        dialog.geometry("300x200")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        tk.Label(dialog, text="Координата X:").grid(row=0, column=0, padx=10, pady=10)
+        x_entry = tk.Entry(dialog)
+        x_entry.grid(row=0, column=1, padx=10, pady=10)
+        x_entry.insert(0, "100")
+        
+        tk.Label(dialog, text="Координата Y:").grid(row=1, column=0, padx=10, pady=10)
+        y_entry = tk.Entry(dialog)
+        y_entry.grid(row=1, column=1, padx=10, pady=10)
+        y_entry.insert(0, "100")
+        
+        tk.Label(dialog, text="Радиус:").grid(row=2, column=0, padx=10, pady=10)
+        r_entry = tk.Entry(dialog)
+        r_entry.grid(row=2, column=1, padx=10, pady=10)
+        r_entry.insert(0, "50")
+        
+        result = {"x": None, "y": None, "r": None, "ok": False}
+        
+        def on_ok():
+            try:
+                x = int(x_entry.get())
+                y = int(y_entry.get())
+                r = int(r_entry.get())
+                
+                if r <= 0:
+                    messagebox.showerror("Ошибка", "Радиус должен быть положительным числом")
+                    return
+                    
+                width, height = self.result_image.size
+                if x < 0 or x >= width or y < 0 or y >= height:
+                    messagebox.showerror("Ошибка", f"Координаты вне изображения. Размер: {width}x{height}")
+                    return
+                
+                result["x"] = x
+                result["y"] = y
+                result["r"] = r
+                result["ok"] = True
+                dialog.destroy()
+                
+            except ValueError:
+                messagebox.showerror("Ошибка", "Введите корректные целые числа")
+        
+        def on_cancel():
+            dialog.destroy()
+        
+        btn_frame = tk.Frame(dialog)
+        btn_frame.grid(row=3, column=0, columnspan=2, pady=20)
+        
+        tk.Button(btn_frame, text="OK", command=on_ok, width=10).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Отмена", command=on_cancel, width=10).pack(side=tk.LEFT, padx=5)
+        
+        dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - dialog.winfo_width()) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{x}+{y}")
+        
+        self.root.wait_window(dialog)
+        
+        if not result["ok"]:
+            return
+        
+        img_array = np.array(self.result_image)
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        
+        cv2.circle(img_bgr, (result["x"], result["y"]), result["r"], (0, 0, 255), -1)
+        
+        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        self.result_image = Image.fromarray(img_rgb)
+        
         self._update_display()
 
     def reset_display(self):
