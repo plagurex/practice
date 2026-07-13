@@ -106,7 +106,7 @@ class ImageProcessorApp:
             self.display_image = self.current_image.copy()
             self._update_display()
         except Exception as e:
-            messagebox.showerror("Ошибка", f"Не удалось загрузить изображение:\n{str(e)}")
+            messagebox.showerror("Ошибка", f"Не удалось загрузить изображение")
 
     def capture_from_camera(self):
         try:
@@ -144,7 +144,7 @@ class ImageProcessorApp:
                 self._update_display()
         except Exception as e:
             cv2.destroyAllWindows()
-            messagebox.showerror("Ошибка", f"Не удалось получить изображение с веб-камеры:\n{str(e)}")
+            messagebox.showerror("Ошибка", f"Не удалось получить изображение с веб-камеры")
 
     def save_image(self):
         if self.result_image is None:
@@ -156,7 +156,7 @@ class ImageProcessorApp:
                 self.result_image.save(self.current_image_path)
                 messagebox.showinfo("Успех", "Изображение сохранено")
             except Exception as e:
-                messagebox.showerror("Ошибка", f"Не удалось сохранить изображение:\n{str(e)}")
+                messagebox.showerror("Ошибка", f"Не удалось сохранить изображение")
         else:
             self.save_image_as()
 
@@ -183,7 +183,7 @@ class ImageProcessorApp:
             self.current_image_path = file_path
             messagebox.showinfo("Успех", "Изображение сохранено")
         except Exception as e:
-            messagebox.showerror("Ошибка", f"Не удалось сохранить изображение:\n{str(e)}")
+            messagebox.showerror("Ошибка", f"Не удалось сохранить изображение")
 
     def apply_channel(self, channel):
         if self.current_image is None:
