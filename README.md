@@ -29,10 +29,15 @@
 ## Установка и запуск
 
 ### Требования
-- Python 3.6+
+- Python 3.6+ с поддержкой tkinder
 - Установленные зависимости
 
 ### Установка зависимостей
 ```bash
 pip install -r requirements.txt
+```
+
+### Запуск
+```bash
+python main.py
 ```
